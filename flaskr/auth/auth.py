@@ -16,7 +16,7 @@ from flaskr.auth.queries import (
     create_user, get_user_by_id, get_user_by_username
 )
 
-bp = Blueprint("auth", __name__, url_prefix="/auth")
+bp = Blueprint("auth", __name__, url_prefix="/auth")  # набор вьюх
 
 
 def login_required(view):
@@ -56,8 +56,8 @@ def register():
         error = None
 
         # TODO: взять из формы username, password
-        username = None
-        password = None
+        username = request.form['username']
+        password = request.form['password']
 
         if not username:
             error = "Username is required."
@@ -85,8 +85,8 @@ def login():
         error = None
 
         # TODO: взять из формы username, password
-        username = None
-        password = None
+        username = request.form['username']
+        password = request.form['password']
 
         user = get_user_by_username(db, username)
 

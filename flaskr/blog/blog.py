@@ -55,10 +55,12 @@ def create():
         error = None
 
         # TODO: достать title и body из формы
-        title = None
-        body = None
+        title = request.form['title'].strip()
+        body = request.form['body'].strip()
 
         # TODO: title обязательное поле. Если его нет записать ошибку
+        if not title:
+            error = 'Title is required'
 
         if error is not None:
             flash(error)
@@ -80,10 +82,12 @@ def update(id):
         error = None
 
         # TODO: достать title и body из формы
-        title = None
-        body = None
+        title = request.form['title'].strip()
+        body = request.form['body'].strip()
 
         # TODO: title обязательное поле. Если его нет записать ошибку
+        if not title:
+            error = 'Title is required'
 
         if error is not None:
             flash(error)
@@ -107,3 +111,4 @@ def delete(id):
     db = get_db()
     delete_post(db, id)
     return redirect(url_for("blog.index"))
+
