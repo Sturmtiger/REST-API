@@ -33,7 +33,9 @@ def create_post(db, title, body, author_id):
 def update_post(db, title, body, id):
     db.execute(
         # TODO: sql - обновить поля title, body у post с переданным ид
-        "UPDATE post SET title = ?, body = ? WHERE id = ?",
+        "UPDATE post "
+        "SET title = ?, body = ? "
+        "WHERE id = ?",
         (title, body, id)
     )
     db.commit()
@@ -42,3 +44,14 @@ def update_post(db, title, body, id):
 def delete_post(db, id):
     db.execute("DELETE FROM post WHERE id = ?", (id,))
     db.commit()
+
+
+#  comment queries
+def comment_list(db):
+    return db.execute(
+        "SELECT comment.id, comment.post_id, comment.text, "
+        "comment.created, comment.author_id, user.username "
+        "FROM comment INNER JOIN user "
+        "ON comment.author_id = user.id "
+        "ORDER BY comment.created DESC"
+    ).fetchall()

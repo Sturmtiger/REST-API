@@ -27,5 +27,5 @@ CREATE TABLE comment (
     created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     text TEXT NOT NULL,
     FOREIGN KEY (author_id) REFERENCES user (id),
-    FOREIGN KEY (post_id) REFERENCES  post (id)
-)
+    FOREIGN KEY (post_id) REFERENCES  post (id) ON DELETE CASCADE
+);

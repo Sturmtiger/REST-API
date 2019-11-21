@@ -1,5 +1,6 @@
 import functools
 
+from flask import abort
 from flask import Blueprint
 from flask import flash
 from flask import g
@@ -7,29 +8,31 @@ from flask import redirect
 from flask import render_template
 from flask import request
 from flask import session
-from flask import url_for
+from flask import Response
+from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import check_password_hash
-
-
 from flaskr.db import get_db
 from flaskr.auth.queries import (
     create_user, get_user_by_id, get_user_by_username
 )
 
-bp = Blueprint("auth", __name__, url_prefix="/auth")  # набор вьюх
+
+auth = HTTPBasicAuth()
 
 
-def login_required(view):
-    """View decorator that redirects anonymous users to the login page."""
+@auth.verify_password
+def verify_password(username, password):
+    db = get_db()
+    user = get_user_by_username(db, username)
+    if user is None or not check_password_hash(user['password'], password):
+        return False
 
-    @functools.wraps(view)
-    def wrapped_view(**kwargs):
-        if g.user is None:
-            return redirect(url_for("auth.login"))
+    session.clear()
+    session["user_id"] = user["id"]
+    return True
 
-        return view(**kwargs)
 
-    return wrapped_view
+bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 
 @bp.before_app_request
@@ -44,70 +47,39 @@ def load_logged_in_user():
         g.user = get_user_by_id(get_db(), user_id)
 
 
-@bp.route("/register", methods=("GET", "POST"))
+@bp.route("/register", methods=["POST"])
 def register():
     """Register a new user.
 
     Validates that the username is not already taken. Hashes the
     password for security.
     """
-    if request.method == "POST":
-        db = get_db()
-        error = None
+    db = get_db()
+    error = None
 
-        # TODO: взять из формы username, password
-        username = request.form['username']
-        password = request.form['password']
+    request_data = request.get_json()
+    username = request_data.get('username')
+    password = request_data.get('password')
 
-        if not username:
-            error = "Username is required."
-        elif not password:
-            error = "Password is required."
-        elif get_user_by_username(db, username) is not None:
-            error = "User {0} is already registered.".format(username)
+    if get_user_by_username(db, username) is not None:
+        error = "User {0} is already registered.".format(username)
 
-        if error is None:
-            # the name is available, store it in the database and go to
-            # the login page
-            create_user(db, username, password)
-            return redirect(url_for("auth.login"))
-
-        flash(error)
-
-    return render_template("auth/register.html")
-
-
-@bp.route("/login", methods=("GET", "POST"))
-def login():
-    """Log in a registered user by adding the user id to the session."""
-    if request.method == "POST":
-        db = get_db()
-        error = None
-
-        # TODO: взять из формы username, password
-        username = request.form['username']
-        password = request.form['password']
-
-        user = get_user_by_username(db, username)
-
-        if user is None:
-            error = "Incorrect username."
-        elif not check_password_hash(user["password"], password):
-            error = "Incorrect password."
-
-        if error is None:
-            # store the user id in a new session and return to the index
-            session.clear()
-            session["user_id"] = user["id"]
-            return redirect(url_for("index"))
-
-        flash(error)
-
-    return render_template("auth/login.html")
+    if error is None:
+        # the name is available, store it in the database
+        create_user(db, username, password)
+        return Response(
+            response='Registration is successful', 
+            status=200,
+            )
+    abort(409, "User {} already exists".format(username))
 
 
 @bp.route("/logout")
+@auth.login_required
 def logout():
     """Clear the current session, including the stored user id."""
     session.clear()
-    return redirect(url_for("index"))
+    return Response(
+        response='Logged out',
+        status=401,
+        )
