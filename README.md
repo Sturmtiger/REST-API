@@ -30,4 +30,4 @@ flask run
 | Get specific comment of the post | GET | http://www.example.com/posts/`id`/comments/`id` |
 | Create comment for the post | POST | http://www.example.com/posts/`id`/comments | text | 
 | Update comment of the post | PUT | http://www.example.com/posts/`id`/comments/`id` | text |
-| Delete post | DELETE | http://www.example.com/posts/`id` |
+| Delete comment of the post | DELETE | http://www.example.com/posts/`id`/comments/`id` |
