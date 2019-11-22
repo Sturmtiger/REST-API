@@ -24,27 +24,12 @@ auth = HTTPBasicAuth()
 def verify_password(username, password):
     db = get_db()
     user = get_user_by_username(db, username)
-    if user is None or not check_password_hash(user['password'], password):
+    if user is None:
         return False
-
-    session.clear()
-    session["user_id"] = user["id"]
-    return True
+    return check_password_hash(user['password'], password)
 
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
-
-
-@bp.before_app_request
-def load_logged_in_user():
-    """If a user id is stored in the session, load the user object from
-    the database into ``g.user``."""
-    user_id = session.get("user_id")
-
-    if user_id is None:
-        g.user = None
-    else:
-        g.user = get_user_by_id(get_db(), user_id)
 
 
 @bp.route("/register", methods=["POST"])

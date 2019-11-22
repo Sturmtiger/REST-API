@@ -1,6 +1,5 @@
 from flask import jsonify
 from flask import Blueprint
-from flask import g
 from flask import request
 from flask import Response
 from werkzeug.exceptions import abort
@@ -8,10 +7,11 @@ from werkzeug.exceptions import abort
 from flaskr.db import get_db
 from flaskr.posts.queries import (create_post, delete_post,
                                  get_post, update_post, post_list)
+from flaskr.auth.queries import get_user_by_username
 from flaskr.auth.auth import auth
 
-bp = Blueprint("posts", __name__)
 
+bp = Blueprint("posts", __name__)
 
 
 @bp.route("/posts/", methods=["GET"])
@@ -48,7 +48,8 @@ def create():
     body = request_data.get('body')
 
     db = get_db()
-    create_post(db, title, body, g.user["id"])
+    current_user = get_user_by_username(request.authorization["username"])
+    create_post(db, title, body, current_user["id"])
 
     return Response(
         response='Post has been created',
@@ -105,7 +106,8 @@ def check_post(id, check_author=True):
     if post is None:
         abort(404, "Post id {0} doesn't exist.".format(id))
 
-    if check_author and post["author_id"] != g.user["id"]:
+    current_user = get_user_by_username(request.authorization["username"])
+    if check_author and post["author_id"] != current_user["id"]:
         abort(403)
 
     return post

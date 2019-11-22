@@ -1,13 +1,14 @@
 from flask import jsonify
 from flask import Blueprint
-from flask import g
 from flask import request
 from flask import Response
 from werkzeug.exceptions import abort
 
 from flaskr.db import get_db
-from flaskr.comments.queries import (get_list_of_post_comments, get_comment_of_post, delete_comment_of_post,
-                                    create_comment_for_post, update_comment_of_post)
+from flaskr.comments.queries import (get_list_of_post_comments, get_comment_of_post, 
+                                     delete_comment_of_post, create_comment_for_post, 
+                                     update_comment_of_post)
+from flaskr.auth.queries import get_user_by_username
 from flaskr.auth.auth import auth
 
 bp = Blueprint("comments", __name__)
@@ -49,7 +50,8 @@ def create(id):
     text = request_data.get('text')
 
     db = get_db()
-    create_comment_for_post(db, g.user["id"], id, text)
+    current_user = get_user_by_username(request.authorization["username"])
+    create_comment_for_post(db, current_user["id"], id, text)
     return Response(
         response='Comment has been created',
         status=201,
@@ -108,7 +110,8 @@ def check_comment(post_id, comment_id, check_author=True):
     if comment is None:
         abort(404, "Comment id {0} doesn't exist.".format(comment_id))
 
-    if check_author and comment["author_id"] != g.user["id"]:
+    current_user = get_user_by_username(request.authorization["username"])
+    if check_author and comment["author_id"] != current_user["id"]:
         abort(403)
 
     return comment
