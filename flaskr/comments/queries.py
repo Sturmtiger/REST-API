@@ -2,7 +2,8 @@
 
 def get_list_of_post_comments(db, id):
     return db.execute(
-            "SELECT c.id, c.post_id, c.created, c.author_id, u.username, c.text "
+            "SELECT c.text, c.created, c.id, c.author_id, " 
+            "u.username "
             "FROM comment c "
             "INNER JOIN user u "
             "ON c.author_id = u.id "
@@ -14,7 +15,8 @@ def get_list_of_post_comments(db, id):
 
 def get_comment_of_post(db, post_id, comment_id):
     return db.execute(
-        "SELECT c.id, c.post_id, c.created, c.author_id, u.username, c.text "
+        "SELECT c.text, c.created, c.id, c.author_id, "
+        "u.username "
         "FROM comment c "
         "INNER JOIN user u "
         "ON c.author_id = u.id "

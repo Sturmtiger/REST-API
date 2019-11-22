@@ -6,18 +6,21 @@ def post_list(db):
         # id, title, body, created, author_id, username
         # из таблицы post и таблицы user (они связаны)
         # и отсортировать по дате создания по убыванию
-        "SELECT post.id, post.title, post.body, post.created, post.author_id, user.username "
-        "FROM post INNER JOIN user "
-        "ON post.author_id = user.id "
-        "ORDER BY post.created DESC"
+        "SELECT p.title, p.body, p.created, p.id, "
+        "p.author_id, u.username "
+        "FROM post p INNER JOIN user u "
+        "ON p.author_id = u.id "
+        "ORDER BY p.created DESC"
     ).fetchall()
 
 
 def get_post(db, id):
     return db.execute(
-            "SELECT p.id, title, body, created, author_id, username"
-            " FROM post p JOIN user u ON p.author_id = u.id"
-            " WHERE p.id = ?",
+            "SELECT p.title, p.body, p.created, p.id, "
+            "p.author_id, u.username "
+            "FROM post p JOIN user u "
+            "ON p.author_id = u.id "
+            "WHERE p.id = ?",
             (id,),
         ).fetchone()
 
@@ -44,14 +47,3 @@ def update_post(db, title, body, id):
 def delete_post(db, id):
     db.execute("DELETE FROM post WHERE id = ?", (id,))
     db.commit()
-
-
-#  comment queries
-def comment_list(db):
-    return db.execute(
-        "SELECT comment.id, comment.post_id, comment.text, "
-        "comment.created, comment.author_id, user.username "
-        "FROM comment INNER JOIN user "
-        "ON comment.author_id = user.id "
-        "ORDER BY comment.created DESC"
-    ).fetchall()

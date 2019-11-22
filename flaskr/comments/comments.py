@@ -46,16 +46,21 @@ def comment(post_id, comment_id):
 @auth.login_required
 def create(id):
     """Create comment for specific post"""
-    request_data = request.get_json()
-    text = request_data.get('text')
+    if request.is_json:
+        request_data = request.get_json()
+        text = request_data.get('text', '').strip()
+        if not text:
+            abort(400, '(text) property must not be empty')
 
-    db = get_db()
-    current_user = get_user_by_username(request.authorization["username"])
-    create_comment_for_post(db, current_user["id"], id, text)
-    return Response(
-        response='Comment has been created',
-        status=201,
-        )
+        db = get_db()
+        current_user = get_user_by_username(db, request.authorization["username"])
+        create_comment_for_post(db, current_user["id"], id, text)
+        return Response(
+            response='Comment has been created',
+            status=201,
+            )
+    else:
+        abort(400, 'JSON must be passed')
 
 
 @bp.route("/posts/<int:post_id>/comments/<int:comment_id>/", methods=["PUT"])
@@ -64,16 +69,21 @@ def update(post_id, comment_id):
     """Update specific post comment if current user is the author"""
     check_comment(post_id, comment_id)
 
-    request_data = request.get_json()
-    text = request_data.get('text')
+    if request.is_json:
+        request_data = request.get_json()
+        text = request_data.get('text', '').strip()
+        if not text:
+            abort(400, '(text) property must not be empty')
 
-    db = get_db()
-    update_comment_of_post(db, post_id, comment_id, text)
+        db = get_db()
+        update_comment_of_post(db, post_id, comment_id, text)
 
-    return Response(
-        response='Commet has been updated',
-        status=200,
-        )
+        return Response(
+            response='Commet has been updated',
+            status=200,
+            )
+    else:
+        abort(400, 'JSON must be passed')
 
 
 @bp.route("/posts/<int:post_id>/comments/<int:comment_id>/", methods=["DELETE"])
@@ -106,11 +116,12 @@ def check_comment(post_id, comment_id, check_author=True):
     """
 
     db = get_db()
+
     comment = get_comment_of_post(db, post_id, comment_id)
     if comment is None:
         abort(404, "Comment id {0} doesn't exist.".format(comment_id))
 
-    current_user = get_user_by_username(request.authorization["username"])
+    current_user = get_user_by_username(db, request.authorization["username"])
     if check_author and comment["author_id"] != current_user["id"]:
         abort(403)
 
