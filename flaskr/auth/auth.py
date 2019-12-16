@@ -63,7 +63,6 @@ def register():
 @auth.login_required
 def logout():
     """Clear the current session, including the stored user id."""
-    session.clear()
     return Response(
         response='Logged out',
         status=401,
